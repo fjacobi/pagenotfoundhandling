@@ -137,6 +137,16 @@ class PagenotfoundController
     protected $_additional403GetParams = array();
 
     /**
+     * Redirect to 403 page
+     *
+     * This will force a redirect instead of showing the content and
+     * appending the returnUrl
+     *
+     * @var boolean
+     */
+    protected $_redirectTo403 = false;
+
+    /**
      * Passthrough for the HTTP header 'Content-Type'
      *
      * @var boolean
@@ -409,6 +419,10 @@ class PagenotfoundController
 
             if(isset($conf['default403Page']) && !empty($conf['default403Page'])) {
                 $this->_default404Page = (int) $conf['default403Page'];
+            }
+
+            if(isset($conf['redirectTo403'])) {
+                $this->_redirectTo403 = $conf['redirectTo403'];
             }
         }
 
