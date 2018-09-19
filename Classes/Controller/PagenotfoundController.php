@@ -16,6 +16,7 @@ namespace AawTeam\Pagenotfoundhandling\Controller;
  * The TYPO3 project - inspiring people to share!
  */
 
+use TYPO3\CMS\Core\Error\Http\ServiceUnavailableException;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
@@ -243,6 +244,10 @@ class PagenotfoundController
 
         if(!$this->_ignoreLanguage && empty($this->_forceLanguage)) {
             $this->_setupLanguage();
+        }
+
+        if($this->_isForbiddenError && $this->_redirectTo403) {
+            $this->_redirectTo403();
         }
 
         $return = $this->_getHtml();
@@ -855,6 +860,60 @@ class PagenotfoundController
                 }
                 break;
         }
+    }
+
+    /**
+     * Redirects to the 403 page and sets a return url
+     *
+     * @return void
+     */
+    protected function _redirectTo403()
+    {
+        if($this->_initTSFE((int)$this->_default404Page)) {
+            /** @var \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer $cObj */
+            $cObj = GeneralUtility::makeInstance('TYPO3\\CMS\\Frontend\\ContentObject\\ContentObjectRenderer');
+            $loginUrl = $cObj->typoLink_URL([
+                'parameter' => (int)$this->_default404Page,
+                'useCacheHash' => false,
+                'forceAbsoluteUrl' => true,
+                'additionalParams' => '&return_url=' . urlencode($this->_params['currentUrl'])
+            ]);
+
+            HttpUtility::redirect($loginUrl);
+        }
+    }
+
+    /**
+     * Initializes a TypoScript Frontend necessary for using TypoScript and TypoLink functions
+     *
+     * @param int $id
+     * @param int $typeNum
+     * @return boolean
+     */
+    protected function _initTSFE($id = 1, $typeNum = 0) {
+        try {
+            \TYPO3\CMS\Frontend\Utility\EidUtility::initTCA();
+            $GLOBALS['TSFE'] = GeneralUtility::makeInstance('TYPO3\\CMS\\Frontend\\Controller\\TypoScriptFrontendController',  $GLOBALS['TYPO3_CONF_VARS'], $id, $typeNum);
+            $GLOBALS['TSFE']->sys_page = GeneralUtility::makeInstance('TYPO3\\CMS\\Frontend\\Page\\PageRepository');
+            $GLOBALS['TSFE']->sys_page->init(TRUE);
+            $GLOBALS['TSFE']->connectToDB();
+            $GLOBALS['TSFE']->initFEuser();
+            $GLOBALS['TSFE']->determineId();
+            $GLOBALS['TSFE']->initTemplate();
+            $GLOBALS['TSFE']->rootLine = $GLOBALS['TSFE']->sys_page->getRootLine($id, '');
+            $GLOBALS['TSFE']->getConfigArray();
+            if (ExtensionManagementUtility::isLoaded('realurl')) {
+                $rootline = \TYPO3\CMS\Backend\Utility\BackendUtility::BEgetRootLine($id);
+                $host = \TYPO3\CMS\Backend\Utility\BackendUtility::firstDomainRecord($rootline);
+                $_SERVER['HTTP_HOST'] = $host;
+            }
+        } catch(ServiceUnavailableException $e) {
+            return false;
+        } catch(\Exception $e) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
