@@ -16,6 +16,9 @@ default403TemplateFile =
 # cat=basic//006; type=string; label=LLL:EXT:pagenotfoundhandling/Resources/Private/Language/locallang_db.xml:pagenotfoundhandling.constants.additional403GetParams
 additional403GetParams =
 
+# cat=basic//004; type=int+; label=LLL:EXT:pagenotfoundhandling/Resources/Private/Language/locallang_db.xml:pagenotfoundhandling.constants.redirectTo403
+redirectTo403 = 0
+
 # cat=advanced//001; type=string; label=LLL:EXT:pagenotfoundhandling/Resources/Private/Language/locallang_db.xml:pagenotfoundhandling.constants.absoluteReferencePrefix
 absoluteReferencePrefix =
 
